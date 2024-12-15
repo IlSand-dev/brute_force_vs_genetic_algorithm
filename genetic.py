@@ -11,6 +11,8 @@ from config import min_time
 
 @jit(nopython=True)
 def get_penalty_type1(segments):
+    if sum(segments) == 0:
+        return -10000000000000
     segments = segment_schedule(segments)
     segment_type = 0
     current_time = 0

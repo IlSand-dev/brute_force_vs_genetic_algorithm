@@ -28,10 +28,10 @@ if __name__ == "__main__":
                     1)По умолчанию(количество попыток = 10 000 количество расписаний = 1 000, шанс на рождение = 0,9, шанс мутации = 1e-09)
                     2)Настроить""")
             while True:
-                input("Введите способ задачи значений(1 или 2): ")
-                if search_type == "1":
+                setting_type = input("Введите способ задачи значений(1 или 2): ")
+                if setting_type == "1":
                     break
-                elif search_type == "2":
+                elif setting_type == "2":
                     while True:
                         attempts = input(
                             "Введите количество попыток(оставьте пустым чтобы использовать значение по умолчанию): ").strip()
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         cur_time = 0
         start = 0
         day = 1
-        schedules.append([f"Водитель {i}"] + [""] * 7)
+        schedules.append([f"Водитель {i+1}"] + [""] * 7)
         for j in range(len(segments)):
             segment = segments[j]
             cur_time += segment * min_time

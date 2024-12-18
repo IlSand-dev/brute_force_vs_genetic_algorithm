@@ -1,6 +1,7 @@
 import itertools
 from copy import deepcopy
 import random as rnd
+from datetime import timedelta
 
 import numpy as np
 from numba import jit
@@ -64,28 +65,34 @@ def get_penalty_type2(segments):
     work_time = 0
     big_rest = False
     penalty = 0
+    end_work = 0
     for segment in segments:
         current_time += segment * min_time
         if current_time == 7 * 24 * 60:
             segment_type = (segment_type + 1) % 2
             continue
         if segment_type % 2 == 0:
-            if work_time == 0 or big_rest:
-                if big_rest and current_time - work_time < 3 * 24 * 60:
-                    penalty += abs(3 * 24 * 60 - (current_time - work_time))
+            if work_time == 0 or end_work > 0:
+                if end_work > 0 and current_time - end_work < 2 * 24 * 60:
+                    penalty += abs(2 * 24 * 60 - (current_time - work_time))
+                end_work = 0
                 work_time = current_time
-                big_rest = False
             else:
                 if segment * min_time != 10:
                     penalty += abs(segment * min_time - 10)
         elif segment_type % 2 == 1:
-            if current_time - work_time < 12 * 60:
-                if segment % 90 != 0:
-                    penalty += segment % 90
+            if current_time - work_time >= 12 * 60 - 90:
+                end_work = current_time
+            if current_time - work_time <= 12 * 60:
+                if not(2 * 60 <= segment * min_time <= 4 * 60):
+                    if 2 * 60 > segment * min_time and not big_rest:
+                        penalty += abs(2 * 60 - segment * min_time)
+                    else:
+                        penalty += abs(segment * min_time - 4 * 60)
+                if segment * min_time % 90 != 0:
+                    penalty += (segment * min_time) % 90
             else:
-                if current_time - work_time > 12 * 60:
-                    penalty += abs(current_time - work_time - 12 * 60)
-                big_rest = True
+                penalty += abs(current_time - work_time - 12 * 60)
         segment_type = (segment_type + 1) % 2
     return -penalty * 1000000000
 
@@ -115,24 +122,22 @@ def generate_type2_drivers(amount):
     for _ in range(amount):
         schedule = np.zeros(7 * 24 * 60 // min_time, dtype=np.int64)
         start_time = rnd.randint(0, (3 * 24 * 60 - 12 * 60) // min_time)
-        end_time = start_time + (12 * 60) // min_time
+        end_time = start_time + (4 * 160) // min_time
         schedule[start_time:end_time] = 1
-        while start_time < (7 * 24 * 60 - 3 * 24 * 60 - 12 * 60) // min_time:
-            start_time = rnd.randint(start_time + (3 * 24 * 60 // min_time),
-                                     min(start_time + (5 * 24 * 60 // min_time),
-                                         (7 * 24 * 60 - 12 * 60) // min_time - 1))
-            end_time = start_time + (12 * 60) // min_time
+        while start_time < (7 * 24 * 60) // min_time:
+            start_time = min(end_time + (2 * 24 * 60 // min_time),  (7 * 24 * 60) // min_time)
+            end_time = min(start_time + (4*160) // min_time,  (7 * 24 * 60) // min_time)
             schedule[start_time:end_time] = 1
-        i = 0
         count_ones = 0
-        while i < len(schedule):
-            if i == 1:
-                if count_ones == 2 * 90:
-                    schedule[i + 1:min(i + 11, len(schedule))] = 0
-                count_ones += 1
+        for i in range(len(schedule)):
+            if schedule[i] == 1:
+                if count_ones == 2 * 90 // min_time:
+                    schedule[i:min(i + 10//min_time, len(schedule))] = 0
+                    count_ones = 0
+                else:
+                    count_ones += 1
             else:
                 count_ones = 0
-            i += 1
         drivers.append(schedule)
     return np.array(drivers)
 
@@ -198,7 +203,7 @@ def best(arrays):
     return max([goal(i) for i in arrays])
 
 
-def genetic(type1, type2, attempts_amount=10000, schedules_amount=1000, birth_rate=0.9, mutation_rate=1/(10**9)):
+def genetic(type1, type2, attempts_amount=10000, schedules_amount=1000, birth_rate=0.9, mutation_rate=1/(10**8)):
     type1_drivers = [generate_type1_drivers(type1) for _ in range(schedules_amount)]
     type2_drivers = [generate_type2_drivers(type2) for _ in range(schedules_amount)]
     arrays = list(zip(type1_drivers, type2_drivers))
@@ -209,4 +214,5 @@ def genetic(type1, type2, attempts_amount=10000, schedules_amount=1000, birth_ra
         arrays = crossover(parents, birth_rate)
         mutate(arrays, mutation_rate)
         history.append(best(arrays))
+        print(history[-1])
     return list(itertools.chain(*max(arrays, key=lambda x: goal(x))))

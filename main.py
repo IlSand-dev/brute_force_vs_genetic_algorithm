@@ -110,7 +110,6 @@ if __name__ == "__main__":
                 print("Число водителей не может быть отрицательным: ")
         else:
             print("Число водителей должно быть целым числом")
-
     best_schedule = search_function(type1, type2, **kwargs)
     schedules = []
     for i in range(len(best_schedule)):
@@ -119,7 +118,7 @@ if __name__ == "__main__":
         cur_time = 0
         start = 0
         day = 1
-        schedules.append([f"Водитель {i+1}"] + [""] * 7)
+        schedules.append([f"Водитель {i + 1}"] + [""] * 7)
         for j in range(len(segments)):
             segment = segments[j]
             cur_time += segment * min_time
@@ -133,7 +132,8 @@ if __name__ == "__main__":
                     schedules[-1][day - 1] += f"{str(timedelta(minutes=int(start)))}-00:00 "
                     schedules[-1][day] += f"00:00-{str(timedelta(minutes=int(cur_time)))} "
                 else:
-                    schedules[-1][day] += f"{str(timedelta(minutes=int(start)))}-{str(timedelta(minutes=int(cur_time)))} "
+                    schedules[-1][
+                        day] += f"{str(timedelta(minutes=int(start)))}-{str(timedelta(minutes=int(cur_time)))} "
         df = pd.DataFrame(schedules)
         df.columns = ["Номер водителя", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота",
                       "Воскресенье"]

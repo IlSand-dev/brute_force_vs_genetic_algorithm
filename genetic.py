@@ -1,7 +1,6 @@
 import itertools
 from copy import deepcopy
 import random as rnd
-from datetime import timedelta
 
 import numpy as np
 from numba import jit
@@ -166,7 +165,7 @@ def selection(arrays):
 def crossover(parents, birth_rate):
     children = []
     for p1, p2 in zip(parents[::2], parents[1::2]):
-        p1, p2 = copy(p1), copy(p2)
+        p1, p2 = deepcopy(p1), deepcopy(p2)
         for i in range(len(p1[0])):
             bus_left = list(range(len(p1[0])))
             j = bus_left.pop(rnd.randint(0, len(p1[0]) - 1))
@@ -195,10 +194,6 @@ def mutate(arrays, e):
                         arrays[schedule][driver_type][driver][segment] = int(not arrays[schedule][driver_type][driver][segment])
 
 
-def copy(a):
-    return deepcopy(a)
-
-
 def best(arrays):
     return max([goal(i) for i in arrays])
 
@@ -210,9 +205,8 @@ def genetic(type1, type2, attempts_amount=10000, schedules_amount=1000, birth_ra
     history = []
     for _ in range(attempts_amount):
         parents = selection(arrays)
-        parents = list(map(copy, parents))
+        parents = list(map(deepcopy, parents))
         arrays = crossover(parents, birth_rate)
         mutate(arrays, mutation_rate)
         history.append(best(arrays))
-        print(history[-1])
     return list(itertools.chain(*max(arrays, key=lambda x: goal(x))))

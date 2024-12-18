@@ -1,4 +1,6 @@
 import random as rnd
+import time
+from datetime import timedelta
 
 import numpy as np
 from numba import jit
@@ -99,7 +101,7 @@ def brute_force(type1, type2):
     max_score = 0
     best_schedule = 0
     size = (type1 + type2) * 7 * 24 * 60 // min_time
-    for i in range(10):
+    for i in range(size):
         array = np.array([int(bit) for bit in f"{i:0{size}b}"])
         parts = np.array_split(array, type1 + type2)
         driver_goal = goal(parts, type1, type2)
